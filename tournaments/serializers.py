@@ -37,7 +37,7 @@ class TournamentSerializer(serializers.ModelSerializer):
     organizer_email = serializers.ReadOnlyField(source='organizer.email')
     # Include matches in the tournament detail view
     matches = MatchSerializer(many=True, read_only=True)
-
+    participants = ParticipantSerializer(many=True, read_only=True)
     class Meta:
         model = Tournament
         fields = '__all__'

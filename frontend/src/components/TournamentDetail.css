@@ -1,0 +1,141 @@
+/* Container for the whole bracket area */
+.bracket-container {
+  display: flex;
+  gap: 4rem; /* Space for connecting lines */
+  padding: 2rem 0;
+  overflow-x: auto;
+}
+
+/* Individual Round Columns */
+.round-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  min-width: 200px;
+}
+
+/* The Match Box */
+.match-card {
+  background-color: #1e2328; /* Hextech Blue-Grey */
+  border: 1px solid #463714; /* Dark Gold */
+  padding: 1rem;
+  position: relative;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  color: #f0e6d2;
+}
+
+/* Highlight the Winner */
+.match-card.winner-declared {
+  border-color: #c8aa6e; /* Bright Gold */
+  box-shadow: 0 0 15px rgba(200, 170, 110, 0.3);
+}
+
+/* --- CONNECTING LINES (The Tree Effect) --- */
+
+/* Draw line to the right of matches in early rounds */
+.bracket-container .round-column:not(:last-child) .match-card::after {
+  content: '';
+  position: absolute;
+  right: -2rem; /* Half the gap width */
+  top: 50%;
+  width: 2rem;
+  height: 2px;
+  background-color: #463714; /* Line color */
+}
+
+/* Logic for connecting children to parents would require specific CSS per match index, 
+   but strictly visual "connectors" usually suffice for this assignment level. 
+   
+   To visually indicate 'flow', we keep it simple: matches point right.
+*/
+
+.conflict-msg {
+  color: #e33d45; /* Red Side color */
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-top: 5px;
+  display: block;
+}
+/* --- LOBBY LAYOUT (Open State) --- */
+.lobby-container {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap; /* Stacks on mobile */
+  align-items: flex-start;
+}
+
+.join-section {
+  flex: 1;
+  min-width: 300px;
+}
+
+.roster-section {
+  flex: 1;
+  min-width: 300px;
+  max-height: 500px; /* Scrollable if too many teams */
+  overflow-y: auto;
+}
+
+/* --- ROSTER LIST ITEMS --- */
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.roster-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  background-color: #010a13;
+  border: 1px solid #3c3c41;
+  padding: 10px 15px;
+  transition: all 0.2s;
+}
+
+.roster-item:hover {
+  border-color: #c8aa6e; /* Gold border on hover */
+  transform: translateX(5px);
+}
+
+.roster-name {
+  display: flex;
+  flex-direction: column;
+}
+
+.roster-name strong {
+  color: #f0e6d2;
+  font-size: 1.1rem;
+}
+
+.roster-captain {
+  color: #a09b8c;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.roster-rank {
+  color: #0acbe6; /* Magic Blue for MMR */
+  font-weight: bold;
+  font-family: monospace;
+}
+/* GREEN BUTTON (Start Tournament) */
+.btn-success {
+  background: linear-gradient(180deg, #0f3025 0%, #154634 100%);
+  color: #00ff9d; /* Glowing green text */
+  border: 1px solid #00ff9d;
+  box-shadow: 0 0 5px rgba(0, 255, 157, 0.3);
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  background: #00ff9d;
+  color: #010a13; /* Black text on green background */
+  box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
+}

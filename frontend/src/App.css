@@ -40,3 +40,39 @@
 .read-the-docs {
   color: #888;
 }
+/* Navbar Styling */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #010a13;
+  border-bottom: 1px solid #463714;
+  margin-bottom: 2rem;
+}
+
+.nav-left, .nav-right, .user-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.welcome-text {
+  color: #a09b8c;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid #c8aa6e;
+  color: #c8aa6e;
+  padding: 0.4em 1em;
+  font-size: 0.8rem;
+}
+
+.btn-logout:hover {
+  background: #c8aa6e;
+  color: #010a13;
+}

@@ -1,68 +1,138 @@
+/* --- LEAGUE OF LEGENDS THEME VARIABLES --- */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+  /* Core Backgrounds */
+  --hextech-black: #010a13;
+  --hextech-dark-blue: #091428;
+  --hextech-blue-grey: #1e2328; /* Card Background */
+  
+  /* Text Colors */
+  --gold-1: #c8aa6e;   /* Main Gold Text */
+  --gold-2: #f0e6d2;   /* Bright Text (Bone White) */
+  --gold-3: #a09b8c;   /* Muted Text */
+  
+  /* Accents */
+  --hextech-magic-blue: #0acbe6; /* Glowing buttons/accents */
+  --hextech-magic-hover: #005a82;
+  --red-side: #e33d45;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  font-family: "Beaufort for LOL", "Spiegel", "Roboto", sans-serif; /* Fallback fonts */
+  background-color: var(--hextech-black);
+  background-image: linear-gradient(to bottom, #010a13, #091428); 
+  color: var(--gold-2);
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* --- UTILITY CLASSES --- */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+h1, h2, h3 {
+  color: var(--gold-1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(200, 170, 110, 0.3); /* Subtle gold line */
+  padding-bottom: 0.5rem;
+}
+
+/* --- CARDS (The Hextech Box Look) --- */
+.card {
+  background-color: var(--hextech-blue-grey);
+  border: 2px solid #463714; /* Dark Gold Border */
+  border-radius: 2px; /* LoL UI is usually sharp, not round */
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+/* Optional: Add a fancy corner glow effect */
+.card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border: 1px solid rgba(200, 170, 110, 0.1);
+  pointer-events: none;
+}
+
+/* --- BUTTONS (The "Play" Button Look) --- */
+/* Apply the Hextech Button style to both <button> and specific <a> links */
+button, 
+.nav-link, 
+.btn-link {
+  display: inline-block; /* Makes links behave like buttons */
+  text-decoration: none; /* Removes the underline */
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  padding: 0.8em 1.5em;
+  font-size: 1em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-right: 10px;
+  /* The Magic Blue Gradient */
+  background: linear-gradient(180deg, #1e2328 0%, #1e282d 100%);
+  color: var(--hextech-magic-blue);
+  border: 1px solid var(--hextech-magic-blue);
+  box-shadow: 0 0 5px rgba(10, 203, 230, 0.3);
+  
+  transition: all 0.2s ease;
+  font-family: inherit; /* Ensure font matches */
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Hover effects for both */
+button:hover, 
+.nav-link:hover, 
+.btn-link:hover {
+  background: var(--hextech-magic-blue);
+  color: var(--hextech-black);
+  box-shadow: 0 0 15px var(--hextech-magic-blue);
+  text-shadow: none;
+}
+
+/* Danger Button (Red Side) */
+.btn-danger {
+  color: var(--red-side);
+  border-color: var(--red-side);
+  box-shadow: 0 0 5px rgba(227, 61, 69, 0.3);
+}
+
+.btn-danger:hover {
+  background: var(--red-side);
+  color: white;
+  box-shadow: 0 0 15px var(--red-side);
+}
+
+/* --- INPUTS --- */
+input {
+  background-color: #010a13;
+  border: 1px solid #3c3c41;
+  color: var(--gold-2);
+  padding: 10px;
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--gold-1);
+  box-shadow: 0 0 5px rgba(200, 170, 110, 0.5);
+}
+
+/* --- BRACKET SPECIFIC --- */
+.match-card {
+  background-color: #13171a;
+  border: 1px solid #444;
+}
+
+.match-card.winner-declared {
+  border-color: var(--gold-1); /* Gold border for finished matches */
+  box-shadow: 0 0 10px rgba(200, 170, 110, 0.2);
+}
+
+.conflict-msg {
+  color: var(--red-side);
 }

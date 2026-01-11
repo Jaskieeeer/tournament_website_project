@@ -21,7 +21,7 @@ class Tournament(models.Model):
     
     # Tournament Details (Req #4)
     start_time = models.DateTimeField()
-    location_url = models.URLField(help_text="Google Maps Embed URL")
+    location_url = models.URLField(max_length=1000, help_text="Google Maps Embed URL")
     description = models.TextField(blank=True)
     
     # Limits (Req #6)

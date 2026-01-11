@@ -1,0 +1,82 @@
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.create-form h2 {
+  text-align: center;
+  color: #c8aa6e;
+  border-bottom: 1px solid #463714;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #a09b8c;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.form-row {
+  display: flex;
+  gap: 1.5rem;
+}
+.form-row .form-group {
+  flex: 1;
+}
+
+/* --- CUSTOM INPUT STYLING --- */
+
+/* Dropdowns */
+select {
+  background-color: #010a13;
+  color: #f0e6d2;
+  border: 1px solid #3c3c41;
+  padding: 10px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+select:focus {
+  border-color: #c8aa6e;
+}
+
+/* Date Pickers */
+input[type="datetime-local"] {
+  background-color: #010a13;
+  color: #f0e6d2;
+  border: 1px solid #3c3c41;
+  padding: 10px;
+  font-family: inherit;
+  
+  /* Filter to invert the calendar icon color to white so it's visible */
+  color-scheme: dark; 
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8); /* Make icon whitish/gold */
+}
+
+textarea {
+  background-color: #010a13;
+  color: #f0e6d2;
+  border: 1px solid #3c3c41;
+  padding: 10px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: #c8aa6e;
+}

@@ -52,6 +52,11 @@ class TournamentViewSet(viewsets.ModelViewSet):
     def start(self, request, pk=None):
         tournament = self.get_object()
         
+        if tournament.organizer != request.user:
+            return Response(
+                {"error": "Only the organizer can start the tournament"}, 
+                status=403
+            )
         # 1. Validation
         if tournament.status != 'open':
             return Response({"error": "Tournament is not open"}, status=400)
