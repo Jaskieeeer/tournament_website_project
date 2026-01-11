@@ -2,9 +2,16 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api, { endpoints } from '../api';
 import './Register.css';
-
+import HextechModal from './HextechModal';
 function Register() {
   const navigate = useNavigate();
+  const [modal, setModal] = useState({ 
+    isOpen: false, 
+    title: '', 
+    message: '',
+    type: 'default', 
+    onConfirm: null });
+
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -13,6 +20,15 @@ function Register() {
     password: '',
     re_password: ''
   });
+
+  const showMessage = (title, message, type='default', onConfirm=null) => {
+    setModal({ isOpen: true, title, message, type, onConfirm });
+  };
+  
+  const closeModal = () => {
+    setModal({ ...modal, isOpen: false });
+    if (modal.onConfirm) modal.onConfirm();
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -26,20 +42,21 @@ function Register() {
     try {
       await api.post(endpoints.register, formData);
       // Requirement #1: System sends email.
-      alert('Registration successful! Please check your email to activate your account before logging in.');
-      navigate('/login');
+      showMessage(
+        "Welcome", 
+        "Registration successful! Please check your email to activate your account before logging in.", 
+        "success", 
+        () => navigate('/login')
+      );
     } catch (err) {
       // Handle backend validation errors (e.g. "password too short", "email taken")
       const errorData = err.response?.data;
       let errorMsg = 'Registration failed.';
       
       if (errorData) {
-        // Format the error object into a readable string
-        errorMsg = Object.entries(errorData)
-          .map(([key, val]) => `${key}: ${val}`)
-          .join('\n');
+        errorMsg = Object.entries(errorData).map(([key, val]) => `${key}: ${val}`).join('\n');
       }
-      alert(errorMsg);
+      showMessage("Registration Error", errorMsg, "danger");
     }
   };
 
@@ -120,6 +137,16 @@ function Register() {
           Already have an account? <Link to="/login" className="btn-link">Log In</Link>
         </p>
       </form>
+      <HextechModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        type={modal.type}
+        showCancel={false}
+        onClose={closeModal}
+        onConfirm={closeModal}
+      >
+        <p style={{whiteSpace: 'pre-line'}}>{modal.message}</p>
+      </HextechModal>
     </div>
   );
 }

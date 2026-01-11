@@ -1,11 +1,11 @@
 import "./TournamentDetail.css";
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react'; // Added useRef
 import api, { endpoints } from '../api';
 import AuthContext from '../context/AuthContext';
 import HextechModal from './HextechModal';
 
-// Helper to group matches by round number for the bracket view
 function groupBy(xs, key) {
+  if (!xs) return {}; 
   return xs.reduce(function(rv, x) {
     (rv[x[key]] = rv[x[key]] || []).push(x);
     return rv;
@@ -19,31 +19,82 @@ function TournamentDetail() {
   const [tournament, setTournament] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Form State for joining
+  // Keep track of previous data to detect changes (like conflicts)
+  const prevTournamentRef = useRef(null);
+
+  // Form State
   const [teamName, setTeamName] = useState('');
   const [summonerName, setSummonerName] = useState('');
   const [rank, setRank] = useState(0);
   const [teammates, setTeammates] = useState('');
 
-  // Modal State
+  // Modal States
   const [showStartModal, setShowStartModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [infoModal, setInfoModal] = useState({ 
+    isOpen: false, title: '', message: '', type: 'default' 
+  });
 
+  const showInfo = (title, message, type='default') => {
+    setInfoModal({ isOpen: true, title, message, type });
+  };
+
+  // --- 1. INITIAL LOAD & POLLING ---
   useEffect(() => {
-    loadTournament();
-  }, []);
+    loadTournament(); // Initial load
 
-  const loadTournament = async () => {
+    // Poll every 3 seconds to keep clients in sync
+    const interval = setInterval(() => {
+        loadTournament(true); // true = silent mode (no loading spinner)
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [id]);
+
+  const loadTournament = async (silent = false) => {
     try {
       const res = await api.get(endpoints.tournamentDetail(id));
-      setTournament(res.data);
+      const newData = res.data;
+      
+      // --- SMART CONFLICT DETECTION (For the passive player) ---
+      // If we have old data, compare it to new data
+      if (prevTournamentRef.current && user) {
+        const oldMatches = prevTournamentRef.current.matches || [];
+        const newMatches = newData.matches || [];
+
+        newMatches.forEach(newMatch => {
+          const oldMatch = oldMatches.find(m => m.id === newMatch.id);
+          if (!oldMatch) return;
+
+          // Did I have a vote before?
+          const wasMyVote = (newMatch.player1_email === user.email && oldMatch.player1_vote) || 
+                            (newMatch.player2_email === user.email && oldMatch.player2_vote);
+          
+          // Is my vote gone now? (And no winner declared)
+          const isMyVoteGone = (newMatch.player1_email === user.email && !newMatch.player1_vote) || 
+                               (newMatch.player2_email === user.email && !newMatch.player2_vote);
+          
+          // If my vote disappeared and there is no winner, it means a CONFLICT reset occurred.
+          if (wasMyVote && isMyVoteGone && !newMatch.winner_email) {
+             showInfo("Update", "Conflict detected! Votes have been reset. Please vote again.", "danger");
+          }
+        });
+      }
+
+      // Update state and Ref
+      setTournament(newData);
+      prevTournamentRef.current = newData;
+      
+      return newData;
     } catch (err) {
-      alert("Error loading tournament data");
+      if (!silent) showInfo("Error", "Failed to load tournament data.", "danger");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  // --- ACTIONS ---
 
   const handleJoin = async (e) => {
     e.preventDefault();
@@ -54,34 +105,25 @@ function TournamentDetail() {
         ranking_points: rank,
         teammates_names: teammates
       });
-      alert('Joined successfully!');
-      loadTournament(); // Refresh list
-      // Clear form
-      setTeamName('');
-      setSummonerName('');
-      setRank(0);
-      setTeammates('');
+      showInfo("Success", "Team registered successfully!", "success");
+      loadTournament();
+      setTeamName(''); setSummonerName(''); setRank(0); setTeammates('');
     } catch (err) {
-      // Backend now sends polite errors, we display them here
-      alert(err.response?.data?.error || JSON.stringify(err.response?.data));
+      showInfo("Registration Failed", err.response?.data?.error || "Failed to join.", "danger");
     }
   };
 
-  // --- MODAL ACTIONS ---
-
-  // 1. Start Tournament
   const confirmStart = async () => {
     try {
       await api.post(endpoints.start(id));
       setShowStartModal(false);
       loadTournament();
     } catch (err) {
-      alert(err.response?.data?.error || "Failed to start tournament");
       setShowStartModal(false);
+      showInfo("Error", err.response?.data?.error || "Failed to start.", "danger");
     }
   };
 
-  // 2. Report Match
   const initiateReport = (matchId, winnerEmail) => {
     setSelectedMatch({ id: matchId, winner: winnerEmail });
     setShowReportModal(true);
@@ -90,22 +132,30 @@ function TournamentDetail() {
   const confirmReport = async () => {
     if (!selectedMatch) return;
     try {
-      await api.post(endpoints.report(id, selectedMatch.id), { winner_email: selectedMatch.winner });
+      const res = await api.post(endpoints.report(id, selectedMatch.id), { winner_email: selectedMatch.winner });
       setShowReportModal(false);
-      loadTournament();
+
+      // Check immediate response for Active Player
+      if (res.data.status === 'conflict') {
+         showInfo("Conflict Detected", "Both captains voted differently. Votes reset.", "danger");
+      } else if (res.data.status === 'finished') {
+         showInfo("Match Complete", "Winner confirmed!", "success");
+      } else {
+         showInfo("Vote Cast", "Waiting for opponent...", "success");
+      }
+      
+      loadTournament(); // Refresh UI
     } catch (err) {
-      alert(err.response?.data?.message || err.response?.data?.error);
       setShowReportModal(false);
+      showInfo("Error", err.response?.data?.message || "Failed to report.", "danger");
       loadTournament(); 
     }
   };
 
-  // --- RENDER ---
+  if (loading || !tournament) return <div className="container">Loading...</div>;
 
-  if (loading || !tournament) return <div className="container">Loading tournament data...</div>;
-
-  // Crash protection: default to empty array if backend sends nothing
   const participants = tournament.participants || [];
+  const matches = tournament.matches || [];
 
   return (
     <div className="container">
@@ -117,163 +167,101 @@ function TournamentDetail() {
         <p>Status: <b style={{color: tournament.status === 'open' ? '#0acbe6' : '#c8aa6e'}}>
             {tournament.status.toUpperCase()}
         </b></p>
-        
         {tournament.location_url && (
             <div className="map-container">
-                <iframe 
-                    title="Tournament Location"
-                    width="100%" 
-                    height="300" 
-                    frameBorder="0" 
-                    scrolling="no" 
-                    src={tournament.location_url}>
-                </iframe>
+                <iframe title="loc" width="100%" height="300" frameBorder="0" scrolling="no" src={tournament.location_url}></iframe>
             </div>
         )}
       </div>
 
-      {/* LOBBY STATE (OPEN) */}
-      {tournament.status === 'open' && (
+      {/* LOBBY */}
+      {tournament.status === 'open' ? (
         <div className="lobby-container">
-            
-            {/* LEFT: Registration Form */}
             <div className="join-section card">
                 <h3>Register Team</h3>
                 <form onSubmit={handleJoin}>
                     <input placeholder="Team Name" value={teamName} onChange={e => setTeamName(e.target.value)} required />
                     <input placeholder="Captain Summoner Name" value={summonerName} onChange={e => setSummonerName(e.target.value)} required />
                     <input type="number" placeholder="Team MMR" value={rank} onChange={e => setRank(parseInt(e.target.value))} required />
-                    <input placeholder="Teammates (comma sep)" value={teammates} onChange={e => setTeammates(e.target.value)} />
+                    <input placeholder="Teammates" value={teammates} onChange={e => setTeammates(e.target.value)} />
                     <button type="submit">Join Tournament</button>
                 </form>
-                
-                {/* ORGANIZER ACTIONS: Start Button (Green) */}
                 {user && user.email === tournament.organizer_email && (
-                    <div style={{borderTop: '1px solid #444', marginTop: '20px', paddingTop: '10px'}}>
-                        <button 
-                            onClick={() => setShowStartModal(true)} 
-                            className="btn-success" 
-                            style={{width: '100%'}}
-                        >
-                            Start Tournament (Organizer)
+                    <div style={{marginTop: '20px', paddingTop: '10px', borderTop: '1px solid #444'}}>
+                        <button onClick={() => setShowStartModal(true)} className="btn-success" style={{width: '100%'}}>
+                            Start Tournament
                         </button>
                     </div>
                 )}
             </div>
-
-            {/* RIGHT: Current Roster */}
             <div className="roster-section card">
                 <h3>Registered Teams ({participants.length} / {tournament.max_participants})</h3>
-                
-                {participants.length === 0 ? (
-                    <p style={{color: '#a09b8c', fontStyle: 'italic', textAlign:'center', marginTop:'2rem'}}>
-                        The lobby is empty. Be the first to join!
-                    </p>
-                ) : (
-                    <div className="roster-list">
-                    {participants.map((p) => (
+                <div className="roster-list">
+                    {participants.map(p => (
                         <div key={p.id} className="roster-item">
-                            <div className="roster-name">
-                                <strong>{p.team_name}</strong>
-                                <span className="roster-captain">Capt: {p.license_number}</span>
-                            </div>
-                            <div className="roster-rank">
-                                MMR: {p.ranking_points}
-                            </div>
+                            <strong>{p.team_name}</strong> <span>{p.ranking_points} MMR</span>
                         </div>
                     ))}
-                    </div>
-                )}
+                </div>
             </div>
         </div>
-      )}
-
-      {/* BRACKET STATE (ONGOING / FINISHED) */}
-      {tournament.status !== 'open' && (
+      ) : (
+        /* BRACKET */
         <div className="bracket">
           <h2>Tournament Bracket</h2>
           <div className="bracket-container">
-            {Object.values(groupBy(tournament.matches, 'round_number')).map((roundMatches, idx) => (
+            {Object.values(groupBy(matches, 'round_number')).map((roundMatches, idx) => (
               <div key={idx} className="round-column">
                 <h3>Round {idx + 1}</h3>
-                {roundMatches.map((m) => (
-                  <div 
-                    key={m.id} 
-                    className={`match-card ${m.winner_email ? 'winner-declared' : ''}`}
-                  >
-                    {/* Player 1 Block */}
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                      <span>P1: {m.player1_email || 'BYE'}</span>
-                      {m.player1_email && !m.winner_email && (
-                        <button 
-                            className="btn-link" 
-                            style={{padding:'2px 8px', fontSize:'0.8rem'}}
-                            onClick={() => initiateReport(m.id, m.player1_email)}
-                        >
-                            Vote
-                        </button>
-                      )}
-                    </div>
+                {roundMatches.map((m) => {
+                  const isPlayer1 = user?.email === m.player1_email;
+                  const isPlayer2 = user?.email === m.player2_email;
+                  const isParticipant = isPlayer1 || isPlayer2;
 
-                    {/* Player 2 Block */}
-                    <div style={{marginTop: '5px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                      <span>P2: {m.player2_email || 'BYE'}</span>
-                      {m.player2_email && !m.winner_email && (
-                        <button 
-                            className="btn-link"
-                            style={{padding:'2px 8px', fontSize:'0.8rem'}}
-                            onClick={() => initiateReport(m.id, m.player2_email)}
-                        >
-                            Vote
-                        </button>
+                  const myVote = isPlayer1 ? m.player1_vote : (isPlayer2 ? m.player2_vote : null);
+                  const hasVoted = !!myVote;
+                  const isConflict = !m.winner_email && m.player1_vote && m.player2_vote;
+                  const showButtons = isParticipant && !m.winner_email && (!hasVoted || isConflict);
+
+                  return (
+                    <div key={m.id} className={`match-card ${m.winner_email ? 'winner-declared' : ''}`}>
+                      <div style={{display:'flex', justifyContent:'space-between'}}>
+                        <span>P1: {m.player1_email || 'BYE'}</span>
+                        {showButtons && <button className="btn-link" style={{fontSize:'0.8rem', padding:'2px 8px'}} onClick={() => initiateReport(m.id, m.player1_email)}>Vote</button>}
+                      </div>
+                      <div style={{display:'flex', justifyContent:'space-between', marginTop:'5px'}}>
+                        <span>P2: {m.player2_email || 'BYE'}</span>
+                        {showButtons && <button className="btn-link" style={{fontSize:'0.8rem', padding:'2px 8px'}} onClick={() => initiateReport(m.id, m.player2_email)}>Vote</button>}
+                      </div>
+                      
+                      {m.winner_email && <div style={{marginTop:'10px', color:'#c8aa6e', borderTop:'1px solid #444'}}>Winner: <strong>{m.winner_email}</strong></div>}
+                      
+                      {!m.winner_email && hasVoted && !isConflict && (
+                        <div style={{marginTop:'8px', color:'#a09b8c', fontSize:'0.9rem', fontStyle:'italic'}}>Vote Cast. Waiting for opponent...</div>
+                      )}
+                      {isConflict && (
+                        <div style={{marginTop:'8px', color:'#e33d45', fontWeight:'bold', fontSize:'0.9rem'}}>⚠ CONFLICT! Re-vote required.</div>
                       )}
                     </div>
-                    
-                    {/* Status / Conflicts */}
-                    {m.winner_email && (
-                        <div style={{marginTop:'10px', color:'#c8aa6e', borderTop:'1px solid #444', paddingTop:'5px'}}>
-                            Winner: <strong>{m.winner_email}</strong>
-                        </div>
-                    )}
-                    
-                    {!m.winner_email && m.player1_vote && m.player2_vote && (
-                      <span className="conflict-msg">CONFLICT! Re-vote required.</span>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* --- MODALS --- */}
-      
-      {/* Start Tournament Modal */}
-      <HextechModal 
-        isOpen={showStartModal}
-        title="Start Tournament Protocol"
-        type="success"
-        confirmText="INITIATE"
-        onClose={() => setShowStartModal(false)}
-        onConfirm={confirmStart}
-      >
-        <p>You are about to lock registrations and generate the bracket tree.</p>
-        <p>Ensure all teams are ready.</p>
-        <p style={{color: '#e33d45', fontWeight:'bold'}}>This action cannot be undone.</p>
+      {/* MODALS */}
+      <HextechModal isOpen={showStartModal} title="Start Tournament" type="success" confirmText="INITIATE" onClose={() => setShowStartModal(false)} onConfirm={confirmStart}>
+        <p>This will lock registration and generate the bracket. Irreversible.</p>
       </HextechModal>
 
-      {/* Report Winner Modal */}
-      <HextechModal 
-        isOpen={showReportModal}
-        title="Confirm Match Result"
-        confirmText="Submit Result"
-        onClose={() => setShowReportModal(false)}
-        onConfirm={confirmReport}
-      >
-        <p>You are voting for:</p>
-        <h3 style={{textAlign:'center', color:'#0acbe6'}}>{selectedMatch?.winner}</h3>
-        <p style={{fontSize:'0.9rem'}}>If both players vote differently, a conflict will be flagged.</p>
+      <HextechModal isOpen={showReportModal} title="Confirm Match Result" confirmText="Submit" onClose={() => setShowReportModal(false)} onConfirm={confirmReport}>
+        <p>Voting for: <strong style={{color:'#0acbe6'}}>{selectedMatch?.winner}</strong></p>
+      </HextechModal>
+
+      <HextechModal isOpen={infoModal.isOpen} title={infoModal.title} type={infoModal.type} showCancel={false} confirmText="OK" onClose={() => setInfoModal({ ...infoModal, isOpen: false })}>
+        <p>{infoModal.message}</p>
       </HextechModal>
 
     </div>

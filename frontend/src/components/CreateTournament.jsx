@@ -2,9 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { endpoints } from '../api';
 import './CreateTournament.css';
+import HextechModal from './HextechModal';
 
 function CreateTournament() {
   const navigate = useNavigate();
+  const [modal, setModal] = useState({ 
+    isOpen: false, 
+    title: '', 
+    message: '', 
+    type: 'default',
+    onConfirm: null 
+  });
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -15,6 +23,15 @@ function CreateTournament() {
     max_participants: 8,
     deadline: ''
   });
+  const showMessage = (title, message, type='default', onConfirm=null) => {
+    setModal({ isOpen: true, title, message, type, onConfirm });
+  };
+
+  const closeModal = () => {
+    setModal({ ...modal, isOpen: false });
+    // If there was a specific action to do after closing (like navigating), do it
+    if (modal.onConfirm) modal.onConfirm();
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -154,6 +171,17 @@ function CreateTournament() {
           {loading ? 'Creating...' : 'Create Tournament'}
         </button>
       </form>
+      <HextechModal 
+        isOpen={modal.isOpen}
+        title={modal.title}
+        type={modal.type}
+        showCancel={false} // Hide cancel button for these alerts
+        onClose={closeModal}
+        onConfirm={closeModal}
+        confirmText="Acknowledged"
+      >
+        <p>{modal.message}</p>
+      </HextechModal>
     </div>
   );
 }

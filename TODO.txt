@@ -1,1 +1,16 @@
-non creator can start tournament
+hextech popups in tournament creation
+team data validation
+information (name, discipline, organizer, time, google maps with location, max participants, participation application deadline, sponsor logos, number of ranked players)
+editing tournament details
+
+player profile with past and upcoming tournaments
+
+autostart with deadline
+enfircing deadline
+cant host in the past
+mail support, forgot and confirm
+responsivity better
+adjust bracket sizes
+after casting a vote the bracket changes
+cant vote on bye
+specific reason for failure to join 
