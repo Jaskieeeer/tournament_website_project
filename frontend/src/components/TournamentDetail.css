@@ -139,3 +139,88 @@
   color: #010a13; /* Black text on green background */
   box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
 }
+/* --- JOIN FORM STYLING --- */
+.join-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem; /* Adds breathing room between fields */
+  margin-top: 1rem;
+}
+
+/* Group labels and inputs */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #a09b8c;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* The row for Captain and MMR to sit side-by-side */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Input styling tweaks for this specific form */
+.join-section input {
+  background-color: #010a13;
+  border: 1px solid #3c3c41;
+  color: #f0e6d2;
+  padding: 10px;
+  font-size: 0.9rem;
+  width: 100%; /* Ensure they fill their container */
+  box-sizing: border-box; /* Prevents padding from breaking layout */
+}
+
+.join-section input:focus {
+  border-color: #c8aa6e;
+  box-shadow: 0 0 5px rgba(200, 170, 110, 0.3);
+  outline: none;
+}
+
+/* Helper text for teammates */
+.form-help {
+  color: #5c5b57;
+  font-size: 0.75rem;
+  font-style: italic;
+  margin-top: -0.2rem;
+}
+
+/* Join Button */
+.btn-join {
+  background: linear-gradient(180deg, #1e2328 0%, #1e282d 100%);
+  border: 1px solid #c8aa6e;
+  color: #c8aa6e;
+  padding: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.btn-join:hover {
+  background: #c8aa6e;
+  color: #010a13;
+  box-shadow: 0 0 10px rgba(200, 170, 110, 0.5);
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}

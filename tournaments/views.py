@@ -7,11 +7,23 @@ from .models import Tournament, Participant, Match
 from .serializers import TournamentSerializer, ParticipantSerializer, MatchSerializer
 import math
 
+
+class IsOrganizerOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Write permissions are only allowed to the organizer.
+        return obj.organizer == request.user
 class TournamentViewSet(viewsets.ModelViewSet):
     queryset = Tournament.objects.all().order_by('-created_at')
     serializer_class = TournamentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOrganizerOrReadOnly]    
     # Req #3: Search functionality
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'discipline']

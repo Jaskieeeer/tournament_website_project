@@ -1,8 +1,4 @@
-hextech popups in tournament creation
-team data validation
-information (name, discipline, organizer, time, google maps with location, max participants, participation application deadline, sponsor logos, number of ranked players)
-editing tournament details
-
+sponsor logos
 player profile with past and upcoming tournaments
 
 autostart with deadline

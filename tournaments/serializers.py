@@ -24,6 +24,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This Team Name is already taken.")
             
         return data
+
 class MatchSerializer(serializers.ModelSerializer):
     player1_email = serializers.ReadOnlyField(source='player1.email')
     player2_email = serializers.ReadOnlyField(source='player2.email')
@@ -35,11 +36,28 @@ class MatchSerializer(serializers.ModelSerializer):
 
 class TournamentSerializer(serializers.ModelSerializer):
     organizer_email = serializers.ReadOnlyField(source='organizer.email')
-    # Include matches in the tournament detail view
     matches = MatchSerializer(many=True, read_only=True)
     participants = ParticipantSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Tournament
         fields = '__all__'
         read_only_fields = ['organizer', 'status', 'created_at']
+
+    # --- NEW VALIDATION LOGIC ---
+    def validate(self, data):
+        # Only check this logic when UPDATING an existing tournament (instance exists)
+        if self.instance:
+            # If the tournament has started (status is NOT 'open')
+            if self.instance.status != 'open':
+                
+                # Check 1: Prevent Start Time changes
+                if 'start_time' in data and data['start_time'] != self.instance.start_time:
+                    # Return error in a format the frontend handles ({ "error": "message" })
+                    raise serializers.ValidationError({"error": "Cannot edit start time after tournament has started."})
+                
+                # Check 2: Prevent Deadline changes
+                if 'deadline' in data and data['deadline'] != self.instance.deadline:
+                    raise serializers.ValidationError({"error": "Cannot edit registration deadline after tournament has started."})
         
+        return data
