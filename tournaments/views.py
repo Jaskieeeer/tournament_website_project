@@ -3,35 +3,65 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db import transaction
-from .models import Tournament, Participant, Match
+from .models import Tournament, Participant, Match, Sponsor
 from .serializers import TournamentSerializer, ParticipantSerializer, MatchSerializer
 import math
-
-
-class IsOrganizerOrReadOnly(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        # Write permissions are only allowed to the organizer.
-        return obj.organizer == request.user
+from django.contrib.auth import get_user_model # <--- 1. ADD THIS IMPORT
+ 
 class TournamentViewSet(viewsets.ModelViewSet):
     queryset = Tournament.objects.all().order_by('-created_at')
     serializer_class = TournamentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOrganizerOrReadOnly]    
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    
     # Req #3: Search functionality
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'discipline']
 
     def perform_create(self, serializer):
         # Req #12: Organizer is the current user
-        serializer.save(organizer=self.request.user)
+        tournament = serializer.save(organizer=self.request.user)
+        
+        # 2. Handle Sponsor Images
+        images = self.request.FILES.getlist('sponsors')
+        for image in images:
+            Sponsor.objects.create(tournament=tournament, image=image)
+    def perform_update(self, serializer):
+        tournament = serializer.save()
+        
+        # Add NEW images (does not delete old ones)
+        images = self.request.FILES.getlist('sponsors')
+        for image in images:
+            Sponsor.objects.create(tournament=tournament, image=image)
 
+    @action(detail=False, methods=['get'], url_path='history')
+    def user_history(self, request):
+        """
+        GET /api/tournaments/history/?username=faker
+        """
+        username = request.query_params.get('username')
+        
+        if not username:
+            return Response({"error": "Username parameter is required"}, status=400)
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=404)
+
+        # distinct() avoids duplicates
+        user_tournaments = Tournament.objects.filter(participants__user=user).distinct()
+
+        # Split into active and past
+        active = user_tournaments.filter(status__in=['open', 'ongoing']).order_by('start_time')
+        past = user_tournaments.filter(status='finished').order_by('-start_time')
+
+        return Response({
+            "username": user.username,
+            "active": TournamentSerializer(active, many=True).data,
+            "past": TournamentSerializer(past, many=True).data
+        })
+    
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
         tournament = self.get_object()
@@ -65,86 +95,15 @@ class TournamentViewSet(viewsets.ModelViewSet):
         tournament = self.get_object()
         
         if tournament.organizer != request.user:
-            return Response(
-                {"error": "Only the organizer can start the tournament"}, 
-                status=403
-            )
-        # 1. Validation
-        if tournament.status != 'open':
-            return Response({"error": "Tournament is not open"}, status=400)
+            return Response({"error": "Only the organizer can start the tournament"}, status=403)
         
-        # Order by Ranking (Seeding) - Req #7
-        participants = list(tournament.participants.all().order_by('-ranking_points'))
-        count = len(participants)
+        try:
+            # Use the shared logic from models.py
+            tournament.start_tournament()
+            return Response({"status": "Tournament started successfully"})
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
         
-        if count < 2:
-            return Response({"error": "Need at least 2 teams to start"}, status=400)
-
-        # 2. Math: Calculate Bracket Size (Next Power of 2)
-        # e.g., 5 teams -> Bracket of 8. 14 teams -> Bracket of 16.
-        bracket_size = 2 ** math.ceil(math.log2(count))
-        
-        # 3. Add "Byes" (Dummy/None participants)
-        num_byes = bracket_size - count
-        seeded_participants = participants + [None] * num_byes
-
-        # 4. Generate Matches Atomic (All or Nothing)
-        with transaction.atomic():
-            tournament.status = 'ongoing'
-            tournament.save()
-            
-            rounds = int(math.log2(bracket_size))
-            matches_by_round = {} 
-
-            # Create Empty Match Objects for all rounds
-            for round_num in range(1, rounds + 1):
-                matches_in_round = bracket_size // (2 ** round_num)
-                matches_by_round[round_num] = []
-                
-                for i in range(matches_in_round):
-                    match = Match.objects.create(
-                        tournament=tournament,
-                        round_number=round_num,
-                        match_number=i
-                    )
-                    matches_by_round[round_num].append(match)
-            
-            # 5. Link the Tree (Winner of Match A -> Slot in Match B)
-            for round_num in range(1, rounds):
-                current_round = matches_by_round[round_num]
-                next_round = matches_by_round[round_num + 1]
-                
-                for i, match in enumerate(current_round):
-                    # Logic: Match 0 & 1 feed into Next_Match 0. Match 2 & 3 feed into Next_Match 1.
-                    next_match_index = i // 2
-                    match.next_match = next_round[next_match_index]
-                    match.save()
-
-            # 6. Fill Round 1 with Players
-            round_1_matches = matches_by_round[1]
-            for i, match in enumerate(round_1_matches):
-                # Simple Seeding: 1v2, 3v4, etc.
-                p1 = seeded_participants[i * 2]
-                p2 = seeded_participants[i * 2 + 1]
-                
-                if p1: match.player1 = p1.user
-                if p2: match.player2 = p2.user
-                
-                # Handle BYE (Automatic Win)
-                if p2 is None and p1 is not None:
-                    match.winner = p1.user
-                    # Auto-advance to next round
-                    if match.next_match:
-                        if match.match_number % 2 == 0:
-                            match.next_match.player1 = p1.user
-                        else:
-                            match.next_match.player2 = p1.user
-                        match.next_match.save()
-                
-                match.save()
-                
-        return Response({"status": "Tournament started", "rounds": rounds})
-    
     @action(detail=True, methods=['post'], url_path='matches/(?P<match_id>\d+)/report')
     def report_match(self, request, pk=None, match_id=None):
         """
@@ -161,7 +120,6 @@ class TournamentViewSet(viewsets.ModelViewSet):
             winner_email = request.data.get('winner_email')
             
             # 2. Validate Winner Email
-            from django.contrib.auth import get_user_model
             User = get_user_model()
             try:
                 winner_obj = User.objects.get(email=winner_email)
@@ -217,5 +175,11 @@ class TournamentViewSet(viewsets.ModelViewSet):
                 else:
                     next_match.player2 = match.winner
                 next_match.save()
+            else:
+                # --- AUTO-FINISH LOGIC ---
+                # If there is no next match, this was the Final.
+                tournament = match.tournament
+                tournament.status = 'finished'
+                tournament.save()
 
         return Response({"status": "finished", "winner": winner_email})

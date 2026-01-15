@@ -80,3 +80,21 @@ textarea {
 textarea:focus {
   border-color: #c8aa6e;
 }
+
+@media (max-width: 600px) {
+  /* Container padding reduction */
+  .container {
+    padding: 1rem;
+  }
+
+  /* Force side-by-side inputs to stack */
+  .form-row {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  
+  /* Ensure full width */
+  .form-group {
+    width: 100%;
+  }
+}

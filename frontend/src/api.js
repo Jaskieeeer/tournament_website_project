@@ -24,6 +24,9 @@ api.interceptors.request.use(
 export const endpoints = {
     login: '/auth/jwt/create/',
     register: '/auth/users/',
+    activate: '/auth/users/activation/',
+    resetPassword: '/auth/users/reset_password/',
+    resetPasswordConfirm: '/auth/users/reset_password_confirm/',
     tournaments: '/api/tournaments/',
     tournamentDetail: (id) => `/api/tournaments/${id}/`,
     join: (id) => `/api/tournaments/${id}/join/`,

@@ -114,3 +114,32 @@
   color: #f0e6d2;
   box-shadow: 0 0 10px rgba(200, 170, 110, 0.2);
 }
+
+@media (max-width: 768px) {
+  .tournament-tile {
+    flex-direction: column;
+    align-items: flex-start; /* Align text to left */
+    gap: 1.5rem;
+  }
+
+  .tile-info {
+    width: 100%;
+  }
+
+  .tile-meta {
+    flex-direction: column; /* Stack Discipline and Status */
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .tile-action {
+    width: 100%;
+    text-align: left; /* Align button with text */
+  }
+
+  .tile-btn {
+    width: 100%; /* Full width button for easier tapping */
+    text-align: center;
+    box-sizing: border-box;
+  }
+}

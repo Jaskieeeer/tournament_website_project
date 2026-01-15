@@ -224,3 +224,35 @@ input[type=number]::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 900px) {
+  /* Stack the lobby sections vertically */
+  .lobby-container {
+    flex-direction: column-reverse; /* Puts Register Form (important) above Roster */
+    gap: 2rem;
+    align-items: center; /* Centers items */
+  }
+
+  /* Force sections to be full width */
+  .join-section, 
+  .roster-section {
+    width: 100% !important; /* Overrides desktop width */
+    max-width: 100%;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 1rem; /* Add internal spacing */
+    box-sizing: border-box; /* Prevents padding from breaking width */
+  }
+
+  /* Ensure the dark background card fills the space */
+  .join-section form {
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Make input fields easy to tap */
+  .join-section input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

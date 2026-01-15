@@ -1,10 +1,13 @@
 from rest_framework import serializers
-from .models import Tournament, Participant, Match
+from .models import Tournament, Participant, Match,Sponsor
+from django.utils import timezone
 
-
+class SponsorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sponsor
+        fields = ['id', 'image']
 class ParticipantSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')
-
     class Meta:
         model = Participant
         fields = [
@@ -38,26 +41,44 @@ class TournamentSerializer(serializers.ModelSerializer):
     organizer_email = serializers.ReadOnlyField(source='organizer.email')
     matches = MatchSerializer(many=True, read_only=True)
     participants = ParticipantSerializer(many=True, read_only=True)
+    sponsors = SponsorSerializer(many=True, read_only=True) # Nested display
     
     class Meta:
         model = Tournament
         fields = '__all__'
-        read_only_fields = ['organizer', 'status', 'created_at']
+        read_only_fields = ['organizer', 'status', 'created_at','sponsors']
 
-    # --- NEW VALIDATION LOGIC ---
-    def validate(self, data):
-        # Only check this logic when UPDATING an existing tournament (instance exists)
-        if self.instance:
-            # If the tournament has started (status is NOT 'open')
-            if self.instance.status != 'open':
-                
-                # Check 1: Prevent Start Time changes
-                if 'start_time' in data and data['start_time'] != self.instance.start_time:
-                    # Return error in a format the frontend handles ({ "error": "message" })
-                    raise serializers.ValidationError({"error": "Cannot edit start time after tournament has started."})
-                
-                # Check 2: Prevent Deadline changes
-                if 'deadline' in data and data['deadline'] != self.instance.deadline:
-                    raise serializers.ValidationError({"error": "Cannot edit registration deadline after tournament has started."})
+    # --- NEW VALIDATION ---
+    def validate_start_time(self, value):
+        """
+        Safeguard: Prevent tournaments from being scheduled in the past.
+        """
+        # If updating an existing tournament, check if start_time is actually changing.
+        # This allows editing description/maps of past tournaments without error.
+        if self.instance and self.instance.start_time == value:
+            return value
+
+        if value < timezone.now():
+            raise serializers.ValidationError("Tournament start time cannot be in the past.")
         
+        return value
+
+    def validate(self, data):
+        """
+        Cross-field validation (e.g. Deadline vs Start Time)
+        """
+        # Grab values from request data, or fall back to existing instance data (for partial updates)
+        start = data.get('start_time')
+        deadline = data.get('deadline')
+
+        if self.instance:
+            start = start or self.instance.start_time
+            deadline = deadline or self.instance.deadline
+        
+        # Logic: Deadline must be BEFORE Start Time
+        if start and deadline and deadline >= start:
+            raise serializers.ValidationError({
+                "deadline": "Registration deadline must be before the start time."
+            })
+            
         return data

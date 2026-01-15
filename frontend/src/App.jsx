@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { useContext } from 'react';
-import AuthContext from './context/AuthContext'; // <--- Import Context
+import AuthContext from './context/AuthContext';
 import './App.css';
 
 // Components
@@ -9,9 +9,13 @@ import Register from './components/Register';
 import TournamentList from './components/TournamentList';
 import TournamentDetail from './components/TournamentDetail';
 import CreateTournament from './components/CreateTournament';
+import PlayerProfile from './components/PlayerProfile'; 
+import ActivateAccount from './components/ActivateAccount';
+import ResetPassword from './components/ResetPassword';
+import ResetPasswordConfirm from './components/ResetPasswordConfirm';
+
 
 function App() {
-  // Use the global state instead of localStorage checks
   const { user, logoutUser } = useContext(AuthContext);
 
   return (
@@ -29,9 +33,9 @@ function App() {
         <div className="nav-right">
           {user ? (
             <div className="user-info">
-              <span className="welcome-text">
-                Summoner: <b style={{color: '#0acbe6'}}>{user.username || user.email}</b>
-              </span>
+              <Link to={`/profile/${user.username}`} className="profile-link">
+                {user.username}
+              </Link>
               <button onClick={logoutUser} className="btn-logout">Logout</button>
             </div>
           ) : (
@@ -48,6 +52,10 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/create" element={<CreateTournament />} />
         <Route path="/tournament/:id" element={<TournamentDetail />} />
+        <Route path="/profile/:username" element={<PlayerProfile />} />
+        <Route path="/activate/:uid/:token" element={<ActivateAccount />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/password/reset/confirm/:uid/:token" element={<ResetPasswordConfirm />} />
         <Route path="/" element={<TournamentList />} />
       </Routes>
     </Router>

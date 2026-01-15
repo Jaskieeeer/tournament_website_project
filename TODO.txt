@@ -1,12 +1,2 @@
-sponsor logos
-player profile with past and upcoming tournaments
-
-autostart with deadline
-enfircing deadline
-cant host in the past
-mail support, forgot and confirm
-responsivity better
-adjust bracket sizes
-after casting a vote the bracket changes
-cant vote on bye
-specific reason for failure to join 
+fix reset password
+finished demo should have a bracket

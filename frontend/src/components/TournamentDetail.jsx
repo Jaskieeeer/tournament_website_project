@@ -26,7 +26,7 @@ function TournamentDetail() {
   const [rank, setRank] = useState(0);
   const [teammates, setTeammates] = useState('');
 
-  // --- NEW: EDIT FORM STATE ---
+  // --- EDIT FORM STATE ---
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -35,6 +35,8 @@ function TournamentDetail() {
     deadline: '',
     location_url: ''
   });
+  // NEW: State for Edit Sponsor Files
+  const [editSponsorFiles, setEditSponsorFiles] = useState([]);
 
   // Modal States
   const [showStartModal, setShowStartModal] = useState(false);
@@ -61,17 +63,17 @@ function TournamentDetail() {
       const res = await api.get(endpoints.tournamentDetail(id));
       const newData = res.data;
       
-      // Sync Edit Form with loaded data (only once or if not editing)
+      // Sync Edit Form with loaded data
       if (!showEditModal) {
           setEditFormData({
               name: newData.name,
-              description: newData.description,
+              description: newData.description || '',
               start_time: newData.start_time ? newData.start_time.slice(0, 16) : '',
-              deadline: newData.deadline ? newData.deadline.slice(0, 16) : '', // <--- Added
+              deadline: newData.deadline ? newData.deadline.slice(0, 16) : '',
               location_url: newData.location_url || ''
           });
       }
-      // Conflict Detection (Passive)
+      // Conflict Detection
       if (prevTournamentRef.current && user) {
         const oldMatches = prevTournamentRef.current.matches || [];
         const newMatches = newData.matches || [];
@@ -99,21 +101,68 @@ function TournamentDetail() {
 
   // --- EDIT HANDLERS ---
   const handleEditChange = (e) => {
-      setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+      let val = e.target.value;
+      const name = e.target.name;
+
+      // If editing Location, check if user pasted full HTML code
+      if (name === 'location_url') {
+          if (val.includes('<iframe') && val.includes('src="')) {
+              // Extract just the URL part
+              const srcMatch = val.match(/src="([^"]+)"/);
+              if (srcMatch && srcMatch[1]) {
+                  val = srcMatch[1];
+              }
+          }
+      }
+
+      setEditFormData({ ...editFormData, [name]: val });
+  };
+
+  const handleEditFileChange = (e) => {
+      setEditSponsorFiles(e.target.files);
   };
 
   const saveEdit = async () => {
       try {
-          await api.patch(endpoints.tournamentDetail(id), editFormData);
+          const data = new FormData();
+          
+          // 1. Append Text Fields
+          Object.keys(editFormData).forEach(key => {
+              // FIX: If tournament is NOT open, do not send dates.
+              // This prevents backend validation errors ("Date in past") when just editing description.
+              if (tournament.status !== 'open') {
+                  if (key === 'start_time' || key === 'deadline') return;
+              }
+              data.append(key, editFormData[key]);
+          });
+
+          // 2. Append New Sponsor Files
+          for (let i = 0; i < editSponsorFiles.length; i++) {
+              data.append('sponsors', editSponsorFiles[i]);
+          }
+
+          // 3. Send as Multipart
+          await api.patch(endpoints.tournamentDetail(id), data, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+
           setShowEditModal(false);
+          setEditSponsorFiles([]); // Reset files
           showInfo("Success", "Tournament updated successfully!", "success");
           loadTournament();
       } catch (err) {
-          showInfo("Update Failed", err.response?.data?.error || "Failed to update.", "danger");
+          const errorData = err.response?.data;
+          let msg = "Failed to update.";
+          if (errorData) {
+              const key = Object.keys(errorData)[0];
+              const val = errorData[key];
+              msg = `${key}: ${Array.isArray(val) ? val[0] : val}`;
+          }
+          showInfo("Update Failed", msg, "danger");
       }
   };
 
-  // --- OTHER ACTIONS (Join, Start, Report) ---
+  // --- OTHER ACTIONS ---
   const handleJoin = async (e) => {
     e.preventDefault();
     const riotIdRegex = /^.+#\w{3,5}$/; 
@@ -198,7 +247,6 @@ function TournamentDetail() {
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
             <h1>{tournament.name}</h1>
             
-            {/* EDIT BUTTON (Only for Organizer) */}
             {isOrganizer && (
                 <button 
                     onClick={() => setShowEditModal(true)} 
@@ -273,31 +321,57 @@ function TournamentDetail() {
       ) : (
         /* BRACKET STATE */
         <div className="bracket">
-          <h2>Tournament Bracket</h2>
-          <div className="bracket-container">
-            {Object.values(groupBy(matches, 'round_number')).map((roundMatches, idx) => (
-              <div key={idx} className="round-column">
-                <h3>Round {idx + 1}</h3>
-                {roundMatches.map((m) => {
-                  const isPlayer1 = user?.email === m.player1_email;
-                  const isPlayer2 = user?.email === m.player2_email;
-                  const isParticipant = isPlayer1 || isPlayer2;
-                  const myVote = isPlayer1 ? m.player1_vote : (isPlayer2 ? m.player2_vote : null);
-                  const hasVoted = !!myVote;
-                  const isConflict = !m.winner_email && m.player1_vote && m.player2_vote;
-                  const showButtons = isParticipant && !m.winner_email && (!hasVoted || isConflict);
-                  return (
-                    <div key={m.id} className={`match-card ${m.winner_email ? 'winner-declared' : ''}`}>
-                      <div style={{display:'flex', justifyContent:'space-between'}}><span>P1: {m.player1_email || 'BYE'}</span>{showButtons && <button className="btn-link" style={{padding:'2px 8px'}} onClick={() => initiateReport(m.id, m.player1_email)}>Vote</button>}</div>
-                      <div style={{marginTop:'5px', display:'flex', justifyContent:'space-between'}}><span>P2: {m.player2_email || 'BYE'}</span>{showButtons && <button className="btn-link" style={{padding:'2px 8px'}} onClick={() => initiateReport(m.id, m.player2_email)}>Vote</button>}</div>
-                      {m.winner_email && <div style={{marginTop:'10px', color:'#c8aa6e'}}>Winner: <strong>{m.winner_email}</strong></div>}
-                      {!m.winner_email && hasVoted && !isConflict && <div style={{marginTop:'8px', color:'#a09b8c', fontSize:'0.9rem', fontStyle:'italic'}}>Vote Cast. Waiting...</div>}
-                      {isConflict && <div style={{marginTop:'8px', color:'#e33d45', fontWeight:'bold', fontSize:'0.9rem'}}>⚠ CONFLICT! Re-vote required.</div>}
-                    </div>
-                  );
-                })}
+  <h2>Tournament Bracket</h2>
+  <div className="bracket-container">
+    {Object.values(groupBy(matches, 'round_number')).map((roundMatches, idx) => (
+      <div key={idx} className="round-column">
+        <h3>Round {idx + 1}</h3>
+        {roundMatches
+          .sort((a, b) => a.match_number - b.match_number) // Keep the sort fix
+          .map((m) => {
+            // --- FIX START: Strict User & BYE Checks ---
+            
+            // 1. Ensure user exists first! (Fixes logged-out bug)
+            const isPlayer1 = user && m.player1_email && user.email === m.player1_email;
+            const isPlayer2 = user && m.player2_email && user.email === m.player2_email;
+            
+            const isParticipant = isPlayer1 || isPlayer2;
+            
+            const myVote = isPlayer1 ? m.player1_vote : (isPlayer2 ? m.player2_vote : null);
+            const hasVoted = !!myVote;
+            const isConflict = !m.winner_email && m.player1_vote && m.player2_vote;
+            
+            // 2. Only show buttons if participant, match active, and opponent exists (Not a BYE)
+            const showButtons = isParticipant && !m.winner_email && (!hasVoted || isConflict);
+            
+            // --- FIX END ---
+
+            return (
+              <div key={m.id} className={`match-card ${m.winner_email ? 'winner-declared' : ''}`}>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <span>P1: {m.player1_email || 'BYE'}</span>
+                    {/* Hide button if this specific slot is a BYE */}
+                    {showButtons && m.player1_email && (
+                        <button className="btn-link" style={{padding:'2px 8px'}} onClick={() => initiateReport(m.id, m.player1_email)}>Vote</button>
+                    )}
+                </div>
+                
+                <div style={{marginTop:'5px', display:'flex', justifyContent:'space-between'}}>
+                    <span>P2: {m.player2_email || 'BYE'}</span>
+                    {/* Hide button if this specific slot is a BYE */}
+                    {showButtons && m.player2_email && (
+                        <button className="btn-link" style={{padding:'2px 8px'}} onClick={() => initiateReport(m.id, m.player2_email)}>Vote</button>
+                    )}
+                </div>
+
+                {m.winner_email && <div style={{marginTop:'10px', color:'#c8aa6e'}}>Winner: <strong>{m.winner_email}</strong></div>}
+                {!m.winner_email && hasVoted && !isConflict && <div style={{marginTop:'8px', color:'#a09b8c', fontSize:'0.9rem', fontStyle:'italic'}}>Vote Cast. Waiting...</div>}
+                {isConflict && <div style={{marginTop:'8px', color:'#e33d45', fontWeight:'bold', fontSize:'0.9rem'}}>⚠ CONFLICT! Re-vote required.</div>}
               </div>
-            ))}
+            );
+          })}
+      </div>
+    ))}
           </div>
         </div>
       )}
@@ -322,7 +396,6 @@ function TournamentDetail() {
             />
         </div>
 
-        {/* --- START TIME (Locked if not Open) --- */}
         <div className="form-group" style={{marginBottom:'1rem'}}>
             <label style={{color:'#a09b8c', fontSize:'0.8rem'}}>Start Time</label>
             <input 
@@ -330,17 +403,16 @@ function TournamentDetail() {
                 name="start_time" 
                 value={editFormData.start_time} 
                 onChange={handleEditChange} 
-                disabled={tournament.status !== 'open'}  // <--- LOCK
+                disabled={tournament.status !== 'open'} 
                 style={{
                     width:'100%', padding:'10px', 
-                    background: tournament.status !== 'open' ? '#1a1a1d' : '#010a13', // Gray out
+                    background: tournament.status !== 'open' ? '#1a1a1d' : '#010a13', 
                     border:'1px solid #3c3c41', color: tournament.status !== 'open' ? '#555' : '#f0e6d2'
                 }}
             />
             {tournament.status !== 'open' && <small style={{color:'#e33d45'}}>Locked (Tournament Started)</small>}
         </div>
 
-        {/* --- DEADLINE (Locked if not Open) --- */}
         <div className="form-group" style={{marginBottom:'1rem'}}>
             <label style={{color:'#a09b8c', fontSize:'0.8rem'}}>Registration Deadline</label>
             <input 
@@ -348,12 +420,24 @@ function TournamentDetail() {
                 name="deadline" 
                 value={editFormData.deadline} 
                 onChange={handleEditChange} 
-                disabled={tournament.status !== 'open'} // <--- LOCK
+                disabled={tournament.status !== 'open'} 
                 style={{
                     width:'100%', padding:'10px', 
                     background: tournament.status !== 'open' ? '#1a1a1d' : '#010a13', 
                     border:'1px solid #3c3c41', color: tournament.status !== 'open' ? '#555' : '#f0e6d2'
                 }}
+            />
+        </div>
+
+        {/* NEW: Sponsor Upload in Edit */}
+        <div className="form-group" style={{marginBottom:'1rem'}}>
+            <label style={{color:'#c8aa6e', fontSize:'0.8rem'}}>Add Sponsors</label>
+            <input 
+                type="file" 
+                multiple 
+                accept="image/*"
+                onChange={handleEditFileChange}
+                style={{width:'100%', padding:'10px', background:'#010a13', border:'1px solid #3c3c41', color:'#a09b8c'}}
             />
         </div>
 
@@ -391,6 +475,51 @@ function TournamentDetail() {
       <HextechModal isOpen={infoModal.isOpen} title={infoModal.title} type={infoModal.type} showCancel={false} confirmText="OK" onClose={closeInfo} onConfirm={closeInfo}>
         <p style={{whiteSpace: 'pre-line'}}>{infoModal.message}</p>
       </HextechModal>
+
+      {/* --- SPONSOR FOOTER --- */}
+      {tournament.sponsors && tournament.sponsors.length > 0 && (
+        <div className="sponsor-footer" style={{
+            marginTop: '4rem', 
+            paddingTop: '2rem',
+            borderTop: '1px solid #463714',
+            textAlign: 'center'
+        }}>
+            <h4 style={{color: '#5c5b57', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom:'1.5rem'}}>
+                Official Partners
+            </h4>
+            <div style={{
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                gap: '3rem', 
+                flexWrap: 'wrap'
+            }}>
+                {tournament.sponsors.map(sponsor => (
+                    <img 
+                        key={sponsor.id} 
+                        src={sponsor.image} 
+                        alt="Sponsor" 
+                        style={{
+                            height: '60px', 
+                            opacity: '0.8', 
+                            filter: 'grayscale(100%) brightness(1.2)', 
+                            transition: 'all 0.3s'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.filter = 'grayscale(0%)'; 
+                            e.currentTarget.style.opacity = '1';
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.filter = 'grayscale(100%) brightness(1.2)';
+                            e.currentTarget.style.opacity = '0.8';
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                    />
+                ))}
+            </div>
+        </div>
+      )}
     </div>
   );
 }

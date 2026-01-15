@@ -72,7 +72,11 @@ function Login() {
         <button type="submit" disabled={loading} style={{width: '100%'}}>
           {loading ? 'Authenticating...' : 'Log In'}
         </button>
-        
+        <div style={{marginTop: '1.5rem', textAlign: 'center'}}>
+    <Link to="/reset-password" style={{color: '#c8aa6e', textDecoration: 'none', fontSize: '0.9rem'}}>
+        Forgot your password?
+    </Link>
+</div>
         <p style={{textAlign: 'center', marginTop: '1.5rem', color: '#a09b8c'}}>
           New Agent? <Link to="/register" className="btn-link" style={{fontSize: '0.9rem', marginLeft: '5px'}}>Register Here</Link>
         </p>
