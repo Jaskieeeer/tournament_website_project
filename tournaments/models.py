@@ -13,7 +13,7 @@ class Tournament(models.Model):
         ('open', 'Open'),
         ('ongoing', 'Ongoing'),
         ('finished', 'Finished'),
-        ('cancelled', 'Cancelled'), # Added cancelled state
+        ('cancelled', 'Cancelled'), 
     ]
     
     DISCIPLINE_CHOICES = [
@@ -37,7 +37,6 @@ class Tournament(models.Model):
     def __str__(self):
         return self.name
 
-    # --- REUSABLE START LOGIC ---
     def start_tournament(self):
         """
         Generates the bracket and starts the tournament.
@@ -52,7 +51,6 @@ class Tournament(models.Model):
         if count < 2:
             raise ValueError("Need at least 2 teams to start.")
 
-        # Calculate Bracket Size (Next Power of 2)
         bracket_size = 2 ** math.ceil(math.log2(count))
         num_byes = bracket_size - count
         seeded_participants = participants + [None] * num_byes
@@ -64,7 +62,6 @@ class Tournament(models.Model):
 
             matches_by_round = {}
 
-            # 1. Create All Matches
             for round_num in range(1, rounds + 1):
                 matches_in_round = bracket_size // (2 ** round_num)
                 matches_by_round[round_num] = []
@@ -76,7 +73,6 @@ class Tournament(models.Model):
                     )
                     matches_by_round[round_num].append(match)
 
-            # 2. Link Matches (Advancement Logic)
             for round_num in range(1, rounds):
                 current_round = matches_by_round[round_num]
                 next_round = matches_by_round[round_num + 1]
@@ -84,7 +80,6 @@ class Tournament(models.Model):
                     match.next_match = next_round[i // 2]
                     match.save()
 
-            # 3. Seed Round 1
             round_1_matches = matches_by_round[1]
             for i, match in enumerate(round_1_matches):
                 p1 = seeded_participants[i * 2]
@@ -93,7 +88,6 @@ class Tournament(models.Model):
                 if p1: match.player1 = p1.user
                 if p2: match.player2 = p2.user
 
-                # Handle BYE (Auto-Win)
                 if p2 is None and p1 is not None:
                     match.winner = p1.user
                     if match.next_match:
@@ -124,7 +118,6 @@ class Match(models.Model):
     round_number = models.IntegerField()
     match_number = models.IntegerField()
     class Meta:
-        # Always sort by Round, then by Match number
         ordering = ['round_number', 'match_number']
 
         

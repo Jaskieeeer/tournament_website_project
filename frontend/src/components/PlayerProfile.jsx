@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api, { endpoints } from '../api';
-import './TournamentList.css'; // Keep for the tile styles (.tournament-tile)
-import './PlayerProfile.css';   // New specific styles
+import './TournamentList.css'; 
+import './PlayerProfile.css';   
 
 function PlayerProfile() {
   const { username } = useParams();

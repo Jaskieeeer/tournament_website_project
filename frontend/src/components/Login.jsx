@@ -5,7 +5,7 @@ import AuthContext from '../context/AuthContext';
 import './Login.css';
 
 function Login() {
-  const { loginUser } = useContext(AuthContext); // Use the global context function
+  const { loginUser } = useContext(AuthContext); 
   const navigate = useNavigate();
   
   const [email, setEmail] = useState('');
@@ -21,10 +21,8 @@ function Login() {
     try {
       const res = await api.post(endpoints.login, { email, password });
       
-      // 1. Update Global State (Save tokens & fetch user)
       loginUser(res.data.access, res.data.refresh);
       
-      // 2. Redirect to Home
       navigate('/');
     } catch (err) {
       console.error(err);

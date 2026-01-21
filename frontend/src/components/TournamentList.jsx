@@ -7,7 +7,6 @@ function TournamentList() {
   const [tournaments, setTournaments] = useState([]);
   const [search, setSearch] = useState('');
   
-  // --- PAGINATION STATE ---
   const [nextPage, setNextPage] = useState(null);
   const [prevPage, setPrevPage] = useState(null);
   const [count, setCount] = useState(0);
@@ -16,25 +15,18 @@ function TournamentList() {
     fetchTournaments();
   }, []);
 
-  // Updated to accept a specific URL (for Next/Prev buttons)
   const fetchTournaments = async (query = '', url = null) => {
     try {
-      // 1. Determine Endpoint
-      // If we clicked next/prev, 'url' is the full link provided by Django.
-      // Otherwise, we build the default search URL.
       const endpoint = url || `${endpoints.tournaments}?search=${query}`;
       
       const res = await api.get(endpoint);
       
-      // 2. Handle Response
-      // If pagination is on, data is inside .results
       if (res.data.results) {
         setTournaments(res.data.results);
-        setNextPage(res.data.next);      // URL for next page
-        setPrevPage(res.data.previous);  // URL for prev page
-        setCount(res.data.count);        // Total number of tournaments
+        setNextPage(res.data.next);      
+        setPrevPage(res.data.previous);  
+        setCount(res.data.count);        
       } else {
-        // Fallback if backend pagination is disabled
         setTournaments(res.data);
       }
     } catch (err) {
@@ -45,7 +37,6 @@ function TournamentList() {
   const handleSearch = (e) => {
     const val = e.target.value;
     setSearch(val);
-    // Reset to first page (url=null) whenever typing matches
     fetchTournaments(val, null);
   };
 
@@ -97,7 +88,7 @@ function TournamentList() {
         )}
       </div>
 
-      {/* --- PAGINATION CONTROLS --- */}
+      {/* --- PAGE CONTROLS --- */}
       {/* Only show if there are multiple pages */}
       {(nextPage || prevPage) && (
         <div className="pagination-controls" style={{

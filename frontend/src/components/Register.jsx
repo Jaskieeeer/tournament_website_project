@@ -41,7 +41,6 @@ function Register() {
     e.preventDefault();
     try {
       await api.post(endpoints.register, formData);
-      // Requirement #1: System sends email.
       showMessage(
         "Welcome", 
         "Registration successful! Please check your email to activate your account before logging in.", 
@@ -49,7 +48,6 @@ function Register() {
         () => navigate('/login')
       );
     } catch (err) {
-      // Handle backend validation errors (e.g. "password too short", "email taken")
       const errorData = err.response?.data;
       let errorMsg = 'Registration failed.';
       

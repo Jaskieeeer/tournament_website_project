@@ -8,7 +8,6 @@ function CreateTournament() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   
-  // --- MODAL STATE ---
   const [modal, setModal] = useState({ 
     isOpen: false, 
     title: '', 
@@ -22,22 +21,19 @@ function CreateTournament() {
     discipline: '5v5_summoners_rift',
     start_time: '',
     location_url: '',
-    description: '', // Kept for backend compatibility, even if hidden/unused
+    description: '', 
     max_participants: 8,
     deadline: ''
   });
 
-  // NEW: State for Sponsor Files
   const [sponsorFiles, setSponsorFiles] = useState([]);
 
-  // Helper to show modal easily
   const showModal = (title, message, type = 'default', onConfirm = null) => {
     setModal({ isOpen: true, title, message, type, onConfirm });
   };
 
   const closeModal = () => {
     setModal({ ...modal, isOpen: false });
-    // Execute any post-close action (like navigation)
     if (modal.onConfirm) modal.onConfirm();
   };
 
@@ -45,7 +41,6 @@ function CreateTournament() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // NEW: Handle File Selection
   const handleFileChange = (e) => {
     setSponsorFiles(e.target.files);
   };
@@ -63,14 +58,12 @@ function CreateTournament() {
     e.preventDefault();
     setLoading(true);
     
-    // 1. Validation Logic
     if (new Date(formData.deadline) >= new Date(formData.start_time)) {
       showModal("Invalid Dates", "Registration deadline must be BEFORE the start time!", "danger");
       setLoading(false);
       return;
     }
 
-    // 2. Prepare FormData (Required for Files)
     const data = new FormData();
     data.append('name', formData.name);
     data.append('discipline', formData.discipline);
@@ -80,37 +73,31 @@ function CreateTournament() {
     data.append('location_url', formData.location_url);
     data.append('description', formData.description);
 
-    // Append each selected file
     for (let i = 0; i < sponsorFiles.length; i++) {
         data.append('sponsors', sponsorFiles[i]);
     }
 
     try {
-      // 3. Send Request (Multipart)
       await api.post(endpoints.tournaments, data, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
       });
       
-      // 4. Success Modal
       showModal(
         "Success", 
         "Tournament created successfully with sponsors!", 
         "success", 
-        () => navigate('/') // Runs when user clicks "OK"
+        () => navigate('/') 
       );
       
     } catch (err) {
-      // 5. Error Modal
       const errorData = err.response?.data;
       let msg = "Failed to create tournament";
       
-      // Parse Django errors nicely if possible
       if (errorData) {
           if (typeof errorData === 'string') msg = errorData;
           else {
-              // Get the first error message from the object
               const key = Object.keys(errorData)[0];
               const val = errorData[key];
               msg = `${key}: ${Array.isArray(val) ? val[0] : val}`;
@@ -157,7 +144,6 @@ function CreateTournament() {
           <input type="number" name="max_participants" value={formData.max_participants} onChange={handleChange} min="2" required />
         </div>
 
-        {/* --- NEW SPONSOR UPLOAD FIELD --- */}
         <div className="form-group">
             <label style={{color: '#c8aa6e'}}>Sponsor Logos (Optional)</label>
             <input 
@@ -189,7 +175,6 @@ function CreateTournament() {
         </button>
       </form>
 
-      {/* --- RENDER MODAL --- */}
       <HextechModal 
         isOpen={modal.isOpen}
         title={modal.title}

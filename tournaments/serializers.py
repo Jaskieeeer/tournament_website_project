@@ -18,11 +18,9 @@ class ParticipantSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'registered_at']
 
     def validate(self, data):
-        # 1. Check unique Summoner Name (Captain)
         if Participant.objects.filter(tournament=data['tournament'], license_number=data['license_number']).exists():
             raise serializers.ValidationError("This Summoner Name is already registered in this tournament.")
             
-        # 2. Check unique Team Name
         if Participant.objects.filter(tournament=data['tournament'], team_name=data['team_name']).exists():
             raise serializers.ValidationError("This Team Name is already taken.")
             
@@ -41,7 +39,7 @@ class TournamentSerializer(serializers.ModelSerializer):
     organizer_email = serializers.ReadOnlyField(source='organizer.email')
     matches = MatchSerializer(many=True, read_only=True)
     participants = ParticipantSerializer(many=True, read_only=True)
-    sponsors = SponsorSerializer(many=True, read_only=True) # Nested display
+    sponsors = SponsorSerializer(many=True, read_only=True) 
     
     class Meta:
         model = Tournament
@@ -50,11 +48,6 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     # --- NEW VALIDATION ---
     def validate_start_time(self, value):
-        """
-        Safeguard: Prevent tournaments from being scheduled in the past.
-        """
-        # If updating an existing tournament, check if start_time is actually changing.
-        # This allows editing description/maps of past tournaments without error.
         if self.instance and self.instance.start_time == value:
             return value
 
@@ -64,10 +57,6 @@ class TournamentSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        """
-        Cross-field validation (e.g. Deadline vs Start Time)
-        """
-        # Grab values from request data, or fall back to existing instance data (for partial updates)
         start = data.get('start_time')
         deadline = data.get('deadline')
 
@@ -75,7 +64,6 @@ class TournamentSerializer(serializers.ModelSerializer):
             start = start or self.instance.start_time
             deadline = deadline or self.instance.deadline
         
-        # Logic: Deadline must be BEFORE Start Time
         if start and deadline and deadline >= start:
             raise serializers.ValidationError({
                 "deadline": "Registration deadline must be before the start time."

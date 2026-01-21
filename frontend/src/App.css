@@ -5,9 +5,8 @@
   text-align: center;
 }
 
-/* Make profile link standout */
 .nav-links a[href*="/profile/"] {
-  color: #0acbe6 !important; /* Hextech Blue */
+  color: #0acbe6 !important; 
   font-weight: bold;
   text-shadow: 0 0 5px rgba(10, 203, 230, 0.4);
 }
@@ -48,7 +47,6 @@
   color: #888;
 }
 
-/* --- NAVBAR STYLING --- */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -65,7 +63,6 @@
   gap: 1.5rem;
 }
 
-/* Auth Links Container (Desktop Default) */
 .auth-links {
   display: flex;
   gap: 1rem;
@@ -92,9 +89,8 @@
   color: #010a13;
 }
 
-/* Profile Link Styling */
 .profile-link {
-  color: #0acbe6 !important; /* Hextech Blue */
+  color: #0acbe6 !important;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -102,14 +98,13 @@
   transition: all 0.3s ease;
   position: relative;
   
-  /* Blue Glow */
   text-shadow: 0 0 8px rgba(10, 203, 230, 0.5);
   padding: 5px 10px;
   border-radius: 4px;
 }
 
 .profile-link:hover {
-  color: #c8aa6e !important; /* Hextech Gold */
+  color: #c8aa6e !important; 
   text-shadow: 0 0 12px rgba(200, 170, 110, 0.6);
   background: rgba(10, 203, 230, 0.1);
 }
@@ -122,7 +117,6 @@
   opacity: 1;
 }
 
-/* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
@@ -130,7 +124,6 @@
     padding: 1rem;
   }
 
-  /* 1. Stack the main containers */
   .nav-left, 
   .nav-right, 
   .user-info {
@@ -138,10 +131,9 @@
     gap: 1rem;
     width: 100%;
     text-align: center;
-    align-items: stretch; /* Forces children to fill width */
+    align-items: stretch; 
   }
 
-  /* 2. Grid for Auth Links (Login/Register) */
   .auth-links {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -151,20 +143,18 @@
     padding: 0;
   }
 
-  /* 3. RESET ALL LINKS (Fixes the Home button shift) */
   .nav-link, 
   .btn-logout {
     width: 100%;
     display: block;
     box-sizing: border-box;
     text-align: center;
-    margin: 0 !important; /* <--- CRITICAL FIX: Removes desktop margins */
-    padding: 0.8em 0;     /* consistent padding for Home/Login/Register */
+    margin: 0 !important; 
+    padding: 0.8em 0;    
   }
 
-  /* 4. Ensure Auth links behave the same */
   .auth-links .nav-link {
-    width: auto; /* Grid controls the width here */
+    width: auto; 
   }
 
   .welcome-text {

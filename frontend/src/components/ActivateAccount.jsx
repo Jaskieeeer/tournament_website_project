@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { endpoints } from '../api';
-import './Login.css'; // Reusing Login styles
+import './Login.css'; 
 
 function ActivateAccount() {
     const { uid, token } = useParams();

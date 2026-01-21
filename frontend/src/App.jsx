@@ -3,7 +3,6 @@ import { useContext } from 'react';
 import AuthContext from './context/AuthContext';
 import './App.css';
 
-// Components
 import Login from './components/Login';
 import Register from './components/Register';
 import TournamentList from './components/TournamentList';

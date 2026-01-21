@@ -1,12 +1,10 @@
-/* Container for the whole bracket area */
 .bracket-container {
   display: flex;
-  gap: 4rem; /* Space for connecting lines */
+  gap: 4rem; 
   padding: 2rem 0;
   overflow-x: auto;
 }
 
-/* Individual Round Columns */
 .round-column {
   display: flex;
   flex-direction: column;
@@ -14,53 +12,42 @@
   min-width: 200px;
 }
 
-/* The Match Box */
 .match-card {
-  background-color: #1e2328; /* Hextech Blue-Grey */
-  border: 1px solid #463714; /* Dark Gold */
+  background-color: #1e2328; 
+  border: 1px solid #463714;
   padding: 1rem;
   position: relative;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
   color: #f0e6d2;
 }
 
-/* Highlight the Winner */
 .match-card.winner-declared {
-  border-color: #c8aa6e; /* Bright Gold */
+  border-color: #c8aa6e; 
   box-shadow: 0 0 15px rgba(200, 170, 110, 0.3);
 }
 
-/* --- CONNECTING LINES (The Tree Effect) --- */
-
-/* Draw line to the right of matches in early rounds */
 .bracket-container .round-column:not(:last-child) .match-card::after {
   content: '';
   position: absolute;
-  right: -2rem; /* Half the gap width */
+  right: -2rem; 
   top: 50%;
   width: 2rem;
   height: 2px;
-  background-color: #463714; /* Line color */
+  background-color: #463714;
 }
 
-/* Logic for connecting children to parents would require specific CSS per match index, 
-   but strictly visual "connectors" usually suffice for this assignment level. 
-   
-   To visually indicate 'flow', we keep it simple: matches point right.
-*/
 
 .conflict-msg {
-  color: #e33d45; /* Red Side color */
+  color: #e33d45;
   font-weight: bold;
   font-size: 0.9rem;
   margin-top: 5px;
   display: block;
 }
-/* --- LOBBY LAYOUT (Open State) --- */
 .lobby-container {
   display: flex;
   gap: 2rem;
-  flex-wrap: wrap; /* Stacks on mobile */
+  flex-wrap: wrap;
   align-items: flex-start;
 }
 
@@ -72,11 +59,10 @@
 .roster-section {
   flex: 1;
   min-width: 300px;
-  max-height: 500px; /* Scrollable if too many teams */
+  max-height: 500px; 
   overflow-y: auto;
 }
 
-/* --- ROSTER LIST ITEMS --- */
 .roster-list {
   display: flex;
   flex-direction: column;
@@ -95,7 +81,7 @@
 }
 
 .roster-item:hover {
-  border-color: #c8aa6e; /* Gold border on hover */
+  border-color: #c8aa6e; 
   transform: translateX(5px);
 }
 
@@ -116,14 +102,13 @@
 }
 
 .roster-rank {
-  color: #0acbe6; /* Magic Blue for MMR */
+  color: #0acbe6; 
   font-weight: bold;
   font-family: monospace;
 }
-/* GREEN BUTTON (Start Tournament) */
 .btn-success {
   background: linear-gradient(180deg, #0f3025 0%, #154634 100%);
-  color: #00ff9d; /* Glowing green text */
+  color: #00ff9d; 
   border: 1px solid #00ff9d;
   box-shadow: 0 0 5px rgba(0, 255, 157, 0.3);
   text-transform: uppercase;
@@ -136,18 +121,16 @@
 
 .btn-success:hover {
   background: #00ff9d;
-  color: #010a13; /* Black text on green background */
+  color: #010a13; 
   box-shadow: 0 0 20px rgba(0, 255, 157, 0.6);
 }
-/* --- JOIN FORM STYLING --- */
 .join-form-grid {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem; /* Adds breathing room between fields */
+  gap: 1.2rem; 
   margin-top: 1rem;
 }
 
-/* Group labels and inputs */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -163,22 +146,20 @@
   margin-left: 2px;
 }
 
-/* The row for Captain and MMR to sit side-by-side */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-/* Input styling tweaks for this specific form */
 .join-section input {
   background-color: #010a13;
   border: 1px solid #3c3c41;
   color: #f0e6d2;
   padding: 10px;
   font-size: 0.9rem;
-  width: 100%; /* Ensure they fill their container */
-  box-sizing: border-box; /* Prevents padding from breaking layout */
+  width: 100%; 
+  box-sizing: border-box; 
 }
 
 .join-section input:focus {
@@ -187,7 +168,6 @@
   outline: none;
 }
 
-/* Helper text for teammates */
 .form-help {
   color: #5c5b57;
   font-size: 0.75rem;
@@ -195,7 +175,6 @@
   margin-top: -0.2rem;
 }
 
-/* Join Button */
 .btn-join {
   background: linear-gradient(180deg, #1e2328 0%, #1e282d 100%);
   border: 1px solid #c8aa6e;
@@ -220,37 +199,31 @@ input[type=number]::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
 }
-/* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 900px) {
-  /* Stack the lobby sections vertically */
   .lobby-container {
-    flex-direction: column-reverse; /* Puts Register Form (important) above Roster */
+    flex-direction: column-reverse; 
     gap: 2rem;
-    align-items: center; /* Centers items */
+    align-items: center; 
   }
 
-  /* Force sections to be full width */
   .join-section, 
   .roster-section {
-    width: 100% !important; /* Overrides desktop width */
+    width: 100% !important; 
     max-width: 100%;
     margin-left: 0 !important;
     margin-right: 0 !important;
-    padding: 1rem; /* Add internal spacing */
-    box-sizing: border-box; /* Prevents padding from breaking width */
+    padding: 1rem; 
+    box-sizing: border-box; 
   }
 
-  /* Ensure the dark background card fills the space */
   .join-section form {
     width: 100%;
     margin: 0 auto;
   }
 
-  /* Make input fields easy to tap */
   .join-section input {
     width: 100%;
     box-sizing: border-box;

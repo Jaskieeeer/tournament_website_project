@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000'; // Adjust if your Django port differs
+const API_URL = 'http://localhost:8000'; 
 
 const api = axios.create({
     baseURL: API_URL,
@@ -9,7 +9,6 @@ const api = axios.create({
     },
 });
 
-// Add a request interceptor to inject the token
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');

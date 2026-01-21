@@ -20,13 +20,11 @@ function TournamentDetail() {
   const [loading, setLoading] = useState(true);
   const prevTournamentRef = useRef(null);
 
-  // Join Form State
   const [teamName, setTeamName] = useState('');
   const [summonerName, setSummonerName] = useState('');
   const [rank, setRank] = useState(0);
   const [teammates, setTeammates] = useState('');
 
-  // --- EDIT FORM STATE ---
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -35,10 +33,8 @@ function TournamentDetail() {
     deadline: '',
     location_url: ''
   });
-  // NEW: State for Edit Sponsor Files
   const [editSponsorFiles, setEditSponsorFiles] = useState([]);
 
-  // Modal States
   const [showStartModal, setShowStartModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -51,7 +47,6 @@ function TournamentDetail() {
   };
   const closeInfo = () => setInfoModal({ ...infoModal, isOpen: false });
 
-  // --- LOAD DATA ---
   useEffect(() => {
     loadTournament(); 
     const interval = setInterval(() => loadTournament(true), 3000);
@@ -63,7 +58,6 @@ function TournamentDetail() {
       const res = await api.get(endpoints.tournamentDetail(id));
       const newData = res.data;
       
-      // Sync Edit Form with loaded data
       if (!showEditModal) {
           setEditFormData({
               name: newData.name,
@@ -73,7 +67,6 @@ function TournamentDetail() {
               location_url: newData.location_url || ''
           });
       }
-      // Conflict Detection
       if (prevTournamentRef.current && user) {
         const oldMatches = prevTournamentRef.current.matches || [];
         const newMatches = newData.matches || [];
@@ -99,15 +92,12 @@ function TournamentDetail() {
     }
   };
 
-  // --- EDIT HANDLERS ---
   const handleEditChange = (e) => {
       let val = e.target.value;
       const name = e.target.name;
 
-      // If editing Location, check if user pasted full HTML code
       if (name === 'location_url') {
           if (val.includes('<iframe') && val.includes('src="')) {
-              // Extract just the URL part
               const srcMatch = val.match(/src="([^"]+)"/);
               if (srcMatch && srcMatch[1]) {
                   val = srcMatch[1];
@@ -126,28 +116,23 @@ function TournamentDetail() {
       try {
           const data = new FormData();
           
-          // 1. Append Text Fields
           Object.keys(editFormData).forEach(key => {
-              // FIX: If tournament is NOT open, do not send dates.
-              // This prevents backend validation errors ("Date in past") when just editing description.
               if (tournament.status !== 'open') {
                   if (key === 'start_time' || key === 'deadline') return;
               }
               data.append(key, editFormData[key]);
           });
 
-          // 2. Append New Sponsor Files
           for (let i = 0; i < editSponsorFiles.length; i++) {
               data.append('sponsors', editSponsorFiles[i]);
           }
 
-          // 3. Send as Multipart
           await api.patch(endpoints.tournamentDetail(id), data, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
 
           setShowEditModal(false);
-          setEditSponsorFiles([]); // Reset files
+          setEditSponsorFiles([]); 
           showInfo("Success", "Tournament updated successfully!", "success");
           loadTournament();
       } catch (err) {
@@ -162,7 +147,6 @@ function TournamentDetail() {
       }
   };
 
-  // --- OTHER ACTIONS ---
   const handleJoin = async (e) => {
     e.preventDefault();
     const riotIdRegex = /^.+#\w{3,5}$/; 
@@ -327,11 +311,8 @@ function TournamentDetail() {
       <div key={idx} className="round-column">
         <h3>Round {idx + 1}</h3>
         {roundMatches
-          .sort((a, b) => a.match_number - b.match_number) // Keep the sort fix
+          .sort((a, b) => a.match_number - b.match_number) 
           .map((m) => {
-            // --- FIX START: Strict User & BYE Checks ---
-            
-            // 1. Ensure user exists first! (Fixes logged-out bug)
             const isPlayer1 = user && m.player1_email && user.email === m.player1_email;
             const isPlayer2 = user && m.player2_email && user.email === m.player2_email;
             
@@ -341,11 +322,8 @@ function TournamentDetail() {
             const hasVoted = !!myVote;
             const isConflict = !m.winner_email && m.player1_vote && m.player2_vote;
             
-            // 2. Only show buttons if participant, match active, and opponent exists (Not a BYE)
             const showButtons = isParticipant && !m.winner_email && (!hasVoted || isConflict);
             
-            // --- FIX END ---
-
             return (
               <div key={m.id} className={`match-card ${m.winner_email ? 'winner-declared' : ''}`}>
                 <div style={{display:'flex', justifyContent:'space-between'}}>
@@ -378,7 +356,6 @@ function TournamentDetail() {
 
       {/* --- MODALS --- */}
       
-      {/* 1. EDIT MODAL */}
       <HextechModal 
         isOpen={showEditModal} 
         title="Edit Tournament" 
@@ -429,7 +406,6 @@ function TournamentDetail() {
             />
         </div>
 
-        {/* NEW: Sponsor Upload in Edit */}
         <div className="form-group" style={{marginBottom:'1rem'}}>
             <label style={{color:'#c8aa6e', fontSize:'0.8rem'}}>Add Sponsors</label>
             <input 
@@ -463,7 +439,6 @@ function TournamentDetail() {
         </div>
       </HextechModal>
 
-      {/* 2. EXISTING MODALS */}
       <HextechModal isOpen={showStartModal} title="Start Protocol" type="success" confirmText="INITIATE" onClose={() => setShowStartModal(false)} onConfirm={confirmStart}>
         <p>Lock registrations and generate bracket?</p>
       </HextechModal>
@@ -476,7 +451,6 @@ function TournamentDetail() {
         <p style={{whiteSpace: 'pre-line'}}>{infoModal.message}</p>
       </HextechModal>
 
-      {/* --- SPONSOR FOOTER --- */}
       {tournament.sponsors && tournament.sponsors.length > 0 && (
         <div className="sponsor-footer" style={{
             marginTop: '4rem', 

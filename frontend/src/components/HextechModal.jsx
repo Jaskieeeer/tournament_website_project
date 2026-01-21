@@ -33,7 +33,7 @@ const HextechModal = ({
           
           <button 
             className={`btn-confirm ${type === 'danger' ? 'btn-danger' : 'btn-success'}`} 
-            onClick={onConfirm || onClose} // If no confirm action, just close
+            onClick={onConfirm || onClose} 
           >
             {confirmText}
           </button>

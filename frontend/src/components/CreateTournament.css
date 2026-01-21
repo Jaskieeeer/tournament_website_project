@@ -34,9 +34,6 @@
   flex: 1;
 }
 
-/* --- CUSTOM INPUT STYLING --- */
-
-/* Dropdowns */
 select {
   background-color: #010a13;
   color: #f0e6d2;
@@ -51,7 +48,6 @@ select:focus {
   border-color: #c8aa6e;
 }
 
-/* Date Pickers */
 input[type="datetime-local"] {
   background-color: #010a13;
   color: #f0e6d2;
@@ -59,13 +55,12 @@ input[type="datetime-local"] {
   padding: 10px;
   font-family: inherit;
   
-  /* Filter to invert the calendar icon color to white so it's visible */
   color-scheme: dark; 
 }
 
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  filter: invert(0.8); /* Make icon whitish/gold */
+  filter: invert(0.8); 
 }
 
 textarea {
@@ -82,18 +77,15 @@ textarea:focus {
 }
 
 @media (max-width: 600px) {
-  /* Container padding reduction */
   .container {
     padding: 1rem;
   }
 
-  /* Force side-by-side inputs to stack */
   .form-row {
     flex-direction: column;
     gap: 1.2rem;
   }
   
-  /* Ensure full width */
   .form-group {
     width: 100%;
   }

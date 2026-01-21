@@ -1,4 +1,3 @@
-/* --- TOURNAMENT TILE SPECIFIC --- */
 .tournament-header {
   display: flex;
   justify-content: space-between;
@@ -20,19 +19,19 @@
 
 .hextech-input {
   width: 100%;
-  max-width: 400px; /* Don't stretch too wide on huge screens */
+  max-width: 400px;
   background-color: #010a13;
-  border: 1px solid #463714; /* Dark Gold */
+  border: 1px solid #463714; 
   color: #f0e6d2;
   padding: 12px 15px;
   font-size: 1rem;
   font-family: inherit;
   transition: all 0.3s ease;
-  box-sizing: border-box; /* Ensures padding doesn't break width */
+  box-sizing: border-box;
 }
 
 .hextech-input:focus {
-  border-color: #c8aa6e; /* Bright Gold */
+  border-color: #c8aa6e;
   box-shadow: 0 0 10px rgba(200, 170, 110, 0.2);
   outline: none;
 }
@@ -42,8 +41,8 @@
   align-items: center;
   
   background: linear-gradient(90deg, rgba(9,20,40,0.9) 0%, rgba(30,35,40,0.8) 100%);
-  border: 1px solid #463714; /* Dark Gold */
-  border-left: 4px solid #463714; /* Status Bar Placeholder */
+  border: 1px solid #463714; 
+  border-left: 4px solid #463714; 
   
   margin-bottom: 1rem;
   padding: 1.5rem;
@@ -52,30 +51,28 @@
   overflow: hidden;
 }
 
-/* Hover Effect: Slide text slightly and glow */
 .tournament-tile:hover {
-  border-color: #c8aa6e; /* Bright Gold */
-  border-left-color: #0acbe6; /* Magic Blue Status on Hover */
+  border-color: #c8aa6e; 
+  border-left-color: #0acbe6; 
   background: linear-gradient(90deg, rgba(13,28,56,1) 0%, rgba(40,45,50,1) 100%);
-  transform: translateX(5px); /* Slide right effect */
+  transform: translateX(5px); 
   box-shadow: -5px 0 15px rgba(10, 203, 230, 0.1);
 }
 
-/* --- TILE CONTENT LAYOUT --- */
 .tile-info h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.4rem;
   color: #f0e6d2;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: none; /* Remove the default H3 underline we set globally */
+  border: none; 
 }
 
 .tile-meta {
   display: flex;
   gap: 1.5rem;
   font-size: 0.9rem;
-  color: #a09b8c; /* Muted Gold */
+  color: #a09b8c; 
 }
 
 .tile-meta span {
@@ -83,18 +80,15 @@
   align-items: center;
 }
 
-/* --- STATUS BADGES (The border-left color changes based on status) --- */
-.status-open { border-left-color: #0acbe6 !important; } /* Blue */
-.status-ongoing { border-left-color: #c8aa6e !important; } /* Gold */
-.status-finished { border-left-color: #5c5b57 !important; } /* Grey */
+.status-open { border-left-color: #0acbe6 !important; }
+.status-ongoing { border-left-color: #c8aa6e !important; } 
+.status-finished { border-left-color: #5c5b57 !important; } 
 
-/* --- ACTION AREA --- */
 .tile-action {
   min-width: 150px;
   text-align: right;
 }
 
-/* Make the button look integrated */
 .tile-btn {
   background: transparent;
   border: 1px solid #463714;
@@ -118,7 +112,7 @@
 @media (max-width: 768px) {
   .tournament-tile {
     flex-direction: column;
-    align-items: flex-start; /* Align text to left */
+    align-items: flex-start; 
     gap: 1.5rem;
   }
 
@@ -127,18 +121,18 @@
   }
 
   .tile-meta {
-    flex-direction: column; /* Stack Discipline and Status */
+    flex-direction: column; 
     gap: 0.5rem;
     margin-top: 0.5rem;
   }
 
   .tile-action {
     width: 100%;
-    text-align: left; /* Align button with text */
+    text-align: left; 
   }
 
   .tile-btn {
-    width: 100%; /* Full width button for easier tapping */
+    width: 100%; 
     text-align: center;
     box-sizing: border-box;
   }

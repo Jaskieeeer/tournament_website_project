@@ -13,7 +13,6 @@ function ResetPassword() {
             setSent(true);
         } catch (err) {
             console.error(err);
-            // Djoser sends 204 even if email is not found (security practice)
             setSent(true); 
         }
     };
